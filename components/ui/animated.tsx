@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface AnimatedCardProps {
@@ -16,11 +16,15 @@ export function AnimatedCard({
   className,
   onClick,
 }: AnimatedCardProps) {
+  const motionProps: HTMLMotionProps<"div"> = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4, delay },
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
+      {...motionProps}
       className={cn(
         'bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden',
         className
