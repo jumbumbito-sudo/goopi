@@ -4,11 +4,12 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-interface AnimatedCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedCardProps {
   children: React.ReactNode;
   delay?: number;
   hoverScale?: number;
   className?: string;
+  onClick?: () => void;
 }
 
 export function AnimatedCard({
@@ -16,7 +17,7 @@ export function AnimatedCard({
   delay = 0,
   hoverScale = 1.02,
   className,
-  ...props
+  onClick,
 }: AnimatedCardProps) {
   return (
     <motion.div
@@ -25,11 +26,11 @@ export function AnimatedCard({
       transition={{ duration: 0.4, delay }}
       whileHover={{ scale: hoverScale }}
       whileTap={{ scale: 0.98 }}
+      onClick={onClick}
       className={cn(
         'bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden',
         className
       )}
-      {...props}
     >
       {children}
     </motion.div>
