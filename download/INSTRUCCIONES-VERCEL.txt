@@ -1,0 +1,88 @@
+╔══════════════════════════════════════════════════════════════╗
+║         🚀 GOOPI APP - INSTRUCCIONES PARA VERCEL             ║
+╚══════════════════════════════════════════════════════════════╝
+
+¡Hola! Aquí tienes tu aplicación Goopi lista para subir a Vercel.
+
+═══════════════════════════════════════════════════════════════
+📋 PASO 1: CREAR CUENTA EN VERCEL (GRATIS)
+═══════════════════════════════════════════════════════════════
+
+1. Ve a: https://vercel.com
+2. Haz clic en "Sign Up" (Registrarse)
+3. Regístrate con tu cuenta de Google o GitHub (es más fácil)
+
+═══════════════════════════════════════════════════════════════
+📋 PASO 2: CREAR CUENTA EN GITHUB (GRATIS)
+═══════════════════════════════════════════════════════════════
+
+1. Ve a: https://github.com
+2. Haz clic en "Sign Up" (Registrarse)
+3. Crea tu cuenta gratis
+
+═══════════════════════════════════════════════════════════════
+📋 PASO 3: SUBIR TU PROYECTO A GITHUB
+═══════════════════════════════════════════════════════════════
+
+1. En GitHub, haz clic en "New repository" (Nuevo repositorio)
+2. Ponle nombre: "goopi-app"
+3. Haz clic en "Create repository"
+4. Luego sube los archivos del ZIP:
+   - Descomprime el archivo "goopi-app.zip"
+   - Sube todos los archivos a tu repositorio
+
+═══════════════════════════════════════════════════════════════
+📋 PASO 4: CONECTAR CON VERCEL
+═══════════════════════════════════════════════════════════════
+
+1. En Vercel, haz clic en "Add New" → "Project"
+2. Selecciona "Import Git Repository"
+3. Elige tu repositorio "goopi-app"
+4. Haz clic en "Import"
+5. Haz clic en "Deploy"
+6. ¡Listo! Tu app estará online en segundos
+
+═══════════════════════════════════════════════════════════════
+⚠️ IMPORTANTE: CONFIGURAR FIREBASE
+═══════════════════════════════════════════════════════════════
+
+Para que funcione el login, necesitas la API Key de Firebase:
+
+1. Ve a: https://console.firebase.google.com
+2. Selecciona tu proyecto: "taxi-macas-52717"
+3. Ve a configuración (icono de engranaje)
+4. Copia la "apiKey" 
+5. En Vercel, ve a tu proyecto → Settings → Environment Variables
+6. Agrega esta variable:
+   - Nombre: NEXT_PUBLIC_FIREBASE_API_KEY
+   - Valor: [tu API key de Firebase]
+
+═══════════════════════════════════════════════════════════════
+📱 ¿QUÉ INCLUYE TU APP?
+═══════════════════════════════════════════════════════════════
+
+✅ Pantalla principal con ofertas y categorías
+✅ Mapa interactivo para pedir taxi y delivery
+✅ Guía comercial con negocios locales
+✅ Sistema de login con Firebase
+✅ Perfil de usuario y conductor
+✅ Diseño moderno y responsive
+
+═══════════════════════════════════════════════════════════════
+🎨 COLORES DE TU APP
+═══════════════════════════════════════════════════════════════
+
+• Verde principal: #10B981 (Goopi)
+• Naranja taxi: #F97316
+• Azul delivery: #3B82F6
+
+═══════════════════════════════════════════════════════════════
+❓ ¿NECESITAS AYUDA?
+═══════════════════════════════════════════════════════════════
+
+Si tienes problemas:
+1. Revisa que todos los archivos estén en GitHub
+2. Verifica que la API Key de Firebase esté configurada
+3. Espera unos minutos a que Vercel compile tu app
+
+¡Buena suerte con tu app Goopi! 🚀
