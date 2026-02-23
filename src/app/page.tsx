@@ -23,10 +23,11 @@ import { useAppStore } from '@/store/useStore';
 const GOOPI_LOGO =
   'https://i0.wp.com/goopiapp.com/wp-content/uploads/2026/02/cropped-logo-png_Mesa-de-trabajo-1-copia.png?fit=2084%2C1890&ssl=1';
 
+/* ===== TYPES ===== */
+
 type WPPage = {
   id: number;
   title: { rendered: string };
-  excerpt: { rendered: string };
   content: { rendered: string };
 };
 
@@ -38,7 +39,7 @@ type WPPost = {
   link: string;
 };
 
-/* ================= HOME SCREEN ================= */
+/* ===== HOME SCREEN ===== */
 
 function HomeScreen({
   onServiceSelect,
@@ -50,14 +51,14 @@ function HomeScreen({
   const [newsPage, setNewsPage] = useState<WPPage | null>(null);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
 
-  /* 🔹 Página oficial de Noticias */
+  /* 🔹 Cargar SOLO la página /noticias/ */
   useEffect(() => {
     fetch('https://goopiapp.com/wp-json/wp/v2/pages?slug=noticias')
       .then((res) => res.json())
       .then((data) => setNewsPage(data[0]));
   }, []);
 
-  /* 🔹 Posts generales → Para ti */
+  /* 🔹 Cargar posts para "Para ti" */
   useEffect(() => {
     fetch('https://goopiapp.com/wp-json/wp/v2/posts?per_page=5')
       .then((res) => res.json())
@@ -73,7 +74,7 @@ function HomeScreen({
             <img
               src={GOOPI_LOGO}
               alt="Goopi"
-              className="w-12 h-12 bg-white/20 rounded-xl p-1"
+              className="w-12 h-12 rounded-xl bg-white/20 p-1"
             />
             <div>
               <h1 className="text-white font-bold">Goopi</h1>
@@ -114,7 +115,7 @@ function HomeScreen({
         </button>
       </section>
 
-      {/* NOTICIAS */}
+      {/* NOTICIAS = PÁGINA */}
       {newsPage && (
         <section className="px-4 mt-8">
           <div className="flex items-center justify-between mb-3">
@@ -133,15 +134,15 @@ function HomeScreen({
           </div>
 
           <div
-            className="bg-white rounded-2xl shadow p-4 prose"
+            className="bg-white rounded-2xl shadow p-4 prose max-w-none"
             dangerouslySetInnerHTML={{
-              __html: newsPage.excerpt.rendered,
+              __html: newsPage.content.rendered,
             }}
           />
         </section>
       )}
 
-      {/* PARA TI */}
+      {/* PARA TI = POSTS */}
       <section className="px-4 mt-6">
         <h2 className="font-bold mb-3">Para ti</h2>
 
@@ -172,11 +173,26 @@ function HomeScreen({
           ))}
         </div>
       </section>
+
+      {/* REGISTRO */}
+      <section className="px-4 mt-8">
+        <button
+          onClick={() =>
+            window.open(
+              'https://goopiapp.com/registro-de-taxistas/',
+              '_blank'
+            )
+          }
+          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl py-3 font-semibold"
+        >
+          Registrar tu unidad
+        </button>
+      </section>
     </div>
   );
 }
 
-/* ================= APP ROOT ================= */
+/* ===== APP ROOT ===== */
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
@@ -193,11 +209,25 @@ export default function Home() {
         {activeTab === 'home' && (
           <HomeScreen onServiceSelect={setActiveTab} />
         )}
+
         {activeTab === 'mapa' && <MapComponent />}
+
         {activeTab === 'guia' && <GuiaComponent />}
+
+        {activeTab === 'perfil' && (
+          <div className="flex-1 flex items-center justify-center">
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="text-purple-600 font-semibold"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        )}
       </AnimatePresence>
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
