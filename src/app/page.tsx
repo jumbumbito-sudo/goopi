@@ -28,7 +28,11 @@ const GOOPI_LOGO =
 type WPPage = {
   id: number;
   title: { rendered: string };
+  excerpt: { rendered: string };
   content: { rendered: string };
+  _embedded?: {
+    ['wp:featuredmedia']?: Array<{ source_url: string }>;
+  };
 };
 
 type WPPost = {
@@ -37,6 +41,9 @@ type WPPost = {
   excerpt: { rendered: string };
   date: string;
   link: string;
+  _embedded?: {
+    ['wp:featuredmedia']?: Array<{ source_url: string }>;
+  };
 };
 
 /* ===== HOME SCREEN ===== */
@@ -51,19 +58,26 @@ function HomeScreen({
   const [newsPage, setNewsPage] = useState<WPPage | null>(null);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
 
-  /* 🔹 Cargar SOLO la página /noticias/ */
+  /* 🔹 Cargar SOLO la página /noticias/ con imagen */
   useEffect(() => {
-    fetch('https://goopiapp.com/wp-json/wp/v2/pages?slug=noticias')
+    fetch(
+      'https://goopiapp.com/wp-json/wp/v2/pages?slug=noticias&_embed'
+    )
       .then((res) => res.json())
       .then((data) => setNewsPage(data[0]));
   }, []);
 
-  /* 🔹 Cargar posts para "Para ti" */
+  /* 🔹 Cargar posts para "Para ti" con imagen */
   useEffect(() => {
-    fetch('https://goopiapp.com/wp-json/wp/v2/posts?per_page=5')
+    fetch(
+      'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
+    )
       .then((res) => res.json())
       .then((data) => setParaTi(data));
   }, []);
+
+  const newsImage =
+    newsPage?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
   return (
     <div className="flex-1 overflow-y-auto pb-20">
@@ -133,44 +147,67 @@ function HomeScreen({
             </a>
           </div>
 
-          <div
-            className="bg-white rounded-2xl shadow p-4 prose max-w-none"
-            dangerouslySetInnerHTML={{
-              __html: newsPage.content.rendered,
-            }}
-          />
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {newsImage && (
+              <img
+                src={newsImage}
+                className="w-full h-40 object-cover"
+              />
+            )}
+
+            <div
+              className="p-4 prose max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: newsPage.excerpt.rendered,
+              }}
+            />
+          </div>
         </section>
       )}
 
-      {/* PARA TI = POSTS */}
+      {/* PARA TI */}
       <section className="px-4 mt-6">
         <h2 className="font-bold mb-3">Para ti</h2>
 
         <div className="flex gap-3 overflow-x-auto">
-          {paraTi.map((post) => (
-            <div
-              key={post.id}
-              onClick={() => window.open(post.link, '_blank')}
-              className="w-72 bg-white rounded-2xl shadow p-3 cursor-pointer"
-            >
-              <h3
-                className="font-semibold line-clamp-1"
-                dangerouslySetInnerHTML={{
-                  __html: post.title.rendered,
-                }}
-              />
-              <p
-                className="text-sm text-gray-500 line-clamp-2"
-                dangerouslySetInnerHTML={{
-                  __html: post.excerpt.rendered,
-                }}
-              />
-              <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(post.date).toLocaleDateString('es-EC')}
+          {paraTi.map((post) => {
+            const image =
+              post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+
+            return (
+              <div
+                key={post.id}
+                onClick={() => window.open(post.link, '_blank')}
+                className="w-72 bg-white rounded-2xl shadow cursor-pointer overflow-hidden"
+              >
+                {image && (
+                  <img
+                    src={image}
+                    className="h-28 w-full object-cover"
+                  />
+                )}
+
+                <div className="p-3">
+                  <h3
+                    className="font-semibold line-clamp-1"
+                    dangerouslySetInnerHTML={{
+                      __html: post.title.rendered,
+                    }}
+                  />
+                  <p
+                    className="text-sm text-gray-500 line-clamp-2"
+                    dangerouslySetInnerHTML={{
+                      __html: post.excerpt.rendered,
+                    }}
+                  />
+                  <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {new Date(post.date).toLocaleDateString('es-EC')}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -210,7 +247,16 @@ export default function Home() {
           <HomeScreen onServiceSelect={setActiveTab} />
         )}
 
-        {activeTab === 'mapa' && <MapComponent />}
+        {activeTab === 'mapa' && (
+          <div className="flex-1 relative">
+            <div
+              className="absolute inset-0"
+              style={{ bottom: '64px' }}
+            >
+              <MapComponent />
+            </div>
+          </div>
+        )}
 
         {activeTab === 'guia' && <GuiaComponent />}
 
