@@ -52,7 +52,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               whileTap={{ scale: 0.95 }}
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
                 isActive
-                  ? 'text-emerald-600 bg-emerald-50'
+                  ? 'text-purple-600 bg-purple-50'
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -68,7 +68,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute -bottom-0.5 w-8 h-1 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full"
+                  className="absolute -bottom-0.5 w-8 h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
