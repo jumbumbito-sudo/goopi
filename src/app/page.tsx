@@ -16,15 +16,13 @@ import {
   Utensils,
   Hotel,
   Landmark,
-  Clock,
   TrendingUp,
-  UserPlus,
   Bike,
   Calendar,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { MapComponent } from '@/components/mapa/MapComponent';
 import { GuiaComponent } from '@/components/guia/GuiaComponent';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAppStore } from '@/store/useStore';
@@ -37,6 +35,7 @@ type WPPost = {
   id: number;
   title: { rendered: string };
   excerpt: { rendered: string };
+  content: { rendered: string };
   date: string;
   link: string;
   _embedded?: {
@@ -46,25 +45,27 @@ type WPPost = {
   };
 };
 
-function HomeScreen({
-  onServiceSelect,
-  onLoginClick,
-}: {
-  onServiceSelect: (service: string) => void;
-  onLoginClick: () => void;
-}) {
+function HomeScreen({ onLoginClick }: { onLoginClick: () => void }) {
   const { user } = useAuth();
 
   const [news, setNews] = useState<WPPost[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [activePost, setActivePost] = useState<WPPost | null>(null);
 
+  // 🔹 Cache simple en sessionStorage
   useEffect(() => {
-    fetch(
-      'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
-    )
+    const cached = sessionStorage.getItem('goopi_news');
+    if (cached) {
+      setNews(JSON.parse(cached));
+      setLoadingNews(false);
+      return;
+    }
+
+    fetch('https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed')
       .then((res) => res.json())
       .then((data) => {
         setNews(data);
+        sessionStorage.setItem('goopi_news', JSON.stringify(data));
         setLoadingNews(false);
       })
       .catch(() => setLoadingNews(false));
@@ -73,11 +74,7 @@ function HomeScreen({
   return (
     <div className="flex-1 overflow-y-auto pb-20">
       {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-30 bg-gradient-to-r from-purple-600 to-purple-700 px-4 pt-4 pb-6 rounded-b-3xl shadow-lg"
-      >
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-purple-600 to-purple-700 px-4 pt-4 pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
@@ -94,72 +91,64 @@ function HomeScreen({
           </div>
 
           <div className="flex gap-2">
-            <motion.button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <Search className="w-5 h-5 text-white" />
-            </motion.button>
-            <motion.button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center relative">
+            </button>
+            <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <Bell className="w-5 h-5 text-white" />
-            </motion.button>
+            </button>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-white/90 bg-white/10 rounded-xl px-3 py-2">
           <MapPin className="w-4 h-4" />
           <span className="text-sm">Macas, Ecuador</span>
-          <ChevronRight className="w-4 h-4 ml-auto" />
         </div>
-      </motion.header>
+      </header>
 
-      {/* Servicios */}
-      <section className="px-4 -mt-4">
-        <div className="grid grid-cols-2 gap-3">
-          <motion.button
+      {/* Taxi / Delivery */}
+      <section className="px-4 -mt-4 grid grid-cols-2 gap-3">
+        {[
+          { icon: Car, label: 'Pedir Taxi' },
+          { icon: Package, label: 'Delivery' },
+        ].map((item) => (
+          <button
+            key={item.label}
             onClick={() =>
               (window.location.href =
                 'https://goopiapp.com/taxis-disponibles/')
             }
-            className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-left"
+            className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-left text-white"
           >
-            <Car className="w-6 h-6 text-white mb-2" />
-            <h3 className="text-white font-bold text-lg">Pedir Taxi</h3>
-            <p className="text-white/80 text-sm">Llega rápido y seguro</p>
-          </motion.button>
+            <item.icon className="w-6 h-6 mb-2" />
+            <h3 className="font-bold">{item.label}</h3>
+          </button>
+        ))}
+      </section>
 
-          <motion.button
-            onClick={() =>
-              (window.location.href =
-                'https://goopiapp.com/taxis-disponibles/')
-            }
-            className="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-2xl p-5 text-left"
-          >
-            <Package className="w-6 h-6 text-white mb-2" />
-            <h3 className="text-white font-bold text-lg">Delivery</h3>
-            <p className="text-white/80 text-sm">Envíos a domicilio</p>
-          </motion.button>
+      {/* MAPA DESDE TU WEB */}
+      <section className="px-4 mt-6">
+        <h2 className="font-bold text-gray-800 text-lg mb-3">Mapa</h2>
+        <div className="rounded-2xl overflow-hidden shadow-lg">
+          <iframe
+            src="https://goopiapp.com/taxis-disponibles/"
+            className="w-full h-[400px]"
+            loading="lazy"
+          />
         </div>
       </section>
 
-      {/* Noticias reales */}
+      {/* NOTICIAS */}
       <section className="px-4 mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-            <Newspaper className="w-5 h-5 text-purple-500" />
-            Noticias
-          </h2>
-          <button
-            onClick={() =>
-              window.open('https://goopiapp.com/noticias/', '_blank')
-            }
-            className="text-purple-600 text-sm flex items-center gap-1"
-          >
-            Ver más <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <h2 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2">
+          <Newspaper className="w-5 h-5 text-purple-500" />
+          Noticias
+        </h2>
 
         {loadingNews ? (
           <p className="text-sm text-gray-500">Cargando noticias…</p>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto">
             {news.map((post) => {
               const image =
                 post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
@@ -167,19 +156,18 @@ function HomeScreen({
               return (
                 <div
                   key={post.id}
-                  onClick={() => window.open(post.link, '_blank')}
-                  className="w-72 flex-shrink-0 bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer"
+                  onClick={() => setActivePost(post)}
+                  className="w-72 flex-shrink-0 bg-white rounded-2xl shadow-lg cursor-pointer"
                 >
                   {image && (
                     <img
                       src={image}
-                      alt=""
-                      className="h-32 w-full object-cover"
+                      className="h-32 w-full object-cover rounded-t-2xl"
                     />
                   )}
                   <div className="p-3">
                     <h3
-                      className="font-semibold text-gray-800 line-clamp-1"
+                      className="font-semibold"
                       dangerouslySetInnerHTML={{
                         __html: post.title.rendered,
                       }}
@@ -190,10 +178,6 @@ function HomeScreen({
                         __html: post.excerpt.rendered,
                       }}
                     />
-                    <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(post.date).toLocaleDateString('es-EC')}
-                    </div>
                   </div>
                 </div>
               );
@@ -201,6 +185,42 @@ function HomeScreen({
           </div>
         )}
       </section>
+
+      {/* MODAL NOTICIA */}
+      <AnimatePresence>
+        {activePost && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          >
+            <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative">
+              <button
+                onClick={() => setActivePost(null)}
+                className="absolute top-3 right-3"
+              >
+                <X />
+              </button>
+
+              <div className="p-4">
+                <h2
+                  className="text-xl font-bold mb-2"
+                  dangerouslySetInnerHTML={{
+                    __html: activePost.title.rendered,
+                  }}
+                />
+                <div
+                  className="prose"
+                  dangerouslySetInnerHTML={{
+                    __html: activePost.content.rendered,
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -208,29 +228,13 @@ function HomeScreen({
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { isLoading } = useAuth();
-  const { setActiveTab: setStoreTab } = useAppStore();
-
-  useEffect(() => {
-    setStoreTab(activeTab);
-  }, [activeTab, setStoreTab]);
-
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center" />;
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <AnimatePresence mode="wait">
-        {activeTab === 'home' && (
-          <HomeScreen
-            onServiceSelect={() => {}}
-            onLoginClick={() => setShowAuthModal(true)}
-          />
-        )}
-        {activeTab === 'mapa' && <MapComponent />}
-        {activeTab === 'guia' && <GuiaComponent />}
-      </AnimatePresence>
+      {activeTab === 'home' && (
+        <HomeScreen onLoginClick={() => setShowAuthModal(true)} />
+      )}
+      {activeTab === 'guia' && <GuiaComponent />}
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <AuthModal
