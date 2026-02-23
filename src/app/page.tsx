@@ -12,6 +12,8 @@ import {
   Package,
   Calendar,
   X,
+  Gift,
+  Star,
 } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -40,19 +42,24 @@ export default function Home() {
   const [news, setNews] = useState<WPPost[]>([]);
   const [activePost, setActivePost] = useState<WPPost | null>(null);
 
-  /* 🔹 Noticias con cache */
+  /* 🔹 Noticias SOLO categoría "noticias" */
   useEffect(() => {
-    const cached = sessionStorage.getItem('goopi_news');
+    const cached = sessionStorage.getItem('goopi_news_noticias');
     if (cached) {
       setNews(JSON.parse(cached));
       return;
     }
 
-    fetch('https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed')
+    fetch(
+      'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed&categories_slug=noticias'
+    )
       .then((res) => res.json())
       .then((data) => {
         setNews(data);
-        sessionStorage.setItem('goopi_news', JSON.stringify(data));
+        sessionStorage.setItem(
+          'goopi_news_noticias',
+          JSON.stringify(data)
+        );
       });
   }, []);
 
@@ -95,7 +102,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* BOTONES */}
+        {/* BOTONES TAXI / DELIVERY */}
         <section className="px-4 -mt-4 grid grid-cols-2 gap-3">
           <button
             onClick={() => {
@@ -122,7 +129,7 @@ export default function Home() {
           </button>
         </section>
 
-        {/* NOTICIAS (AL FINAL) */}
+        {/* NOTICIAS */}
         <section className="px-4 mt-8">
           <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2 mb-3">
             <Newspaper className="w-5 h-5 text-purple-500" />
@@ -167,6 +174,33 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+
+          {/* BOTONES DEBAJO DE NOTICIAS */}
+          <div className="grid grid-cols-1 gap-3 mt-5">
+            <button
+              onClick={() =>
+                window.open(
+                  'https://goopiapp.com/registro-de-taxistas/',
+                  '_blank'
+                )
+              }
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl py-3 font-semibold"
+            >
+              Registrar tu unidad
+            </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button className="bg-white border rounded-xl py-3 flex items-center justify-center gap-2 text-gray-700 font-medium">
+                <Gift className="w-5 h-5 text-purple-500" />
+                Ofertas
+              </button>
+
+              <button className="bg-white border rounded-xl py-3 flex items-center justify-center gap-2 text-gray-700 font-medium">
+                <Star className="w-5 h-5 text-amber-500" />
+                Puntos
+              </button>
+            </div>
           </div>
         </section>
 
@@ -213,7 +247,9 @@ export default function Home() {
           ← Volver
         </button>
         <span className="font-semibold">
-          {mapType === 'taxi' ? 'Taxi disponible' : 'Delivery disponible'}
+          {mapType === 'taxi'
+            ? 'Taxis disponibles'
+            : 'Delivery disponible'}
         </span>
       </header>
 
