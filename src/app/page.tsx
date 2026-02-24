@@ -24,14 +24,9 @@ const REGISTRO_UNIDADES_WP =
 const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
-/* ID CATEGORÍA NOTICIAS */
-const NEWS_CATEGORY_ID = 23;
-
 type WPPost = {
   id: number;
   title: { rendered: string };
-  excerpt: { rendered: string };
-  date: string;
   link: string;
   _embedded?: {
     ['wp:featuredmedia']?: Array<{ source_url: string }>;
@@ -46,21 +41,21 @@ export default function Home() {
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
 
-  /* NOTICIAS */
+  /* NOTICIAS — DESDE /locales/noticias/ */
   useEffect(() => {
     fetch(
-      `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=6&_embed`
+      'https://goopiapp.com/wp-json/wp/v2/posts?categories_slug=noticias&per_page=6&_embed'
     )
       .then(res => {
         if (!res.ok) throw new Error('Error noticias');
         return res.json();
       })
-      .then(data => setNoticias(data))
+      .then(setNoticias)
       .catch(console.error)
       .finally(() => setLoadingNoticias(false));
   }, []);
 
-  /* PARA TI */
+  /* PARA TI — POSTS GENERALES */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=6&_embed'
@@ -142,13 +137,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* NOTICIAS / FALLBACK */}
+            {/* NOTICIAS */}
             {!loadingNoticias && (
               <div className="flex gap-3 overflow-x-auto mb-6">
-                {(noticias.length > 0
-                  ? noticias
-                  : paraTi
-                ).map(post => {
+                {noticias.map(post => {
                   const img =
                     post._embedded?.['wp:featuredmedia']?.[0]
                       ?.source_url;
