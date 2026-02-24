@@ -24,38 +24,36 @@ const REGISTRO_UNIDADES_WP =
 const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
-type WPPost = {
+type WPTag = {
   id: number;
-  title: { rendered: string };
+  name: string;
+  slug: string;
   link: string;
-  _embedded?: {
-    ['wp:featuredmedia']?: Array<{ source_url: string }>;
-  };
 };
 
 export default function Home() {
   const [tab, setTab] = useState<'home' | 'mapa' | 'guia' | 'perfil'>(
     'home'
   );
-  const [noticias, setNoticias] = useState<WPPost[]>([]);
-  const [paraTi, setParaTi] = useState<WPPost[]>([]);
-  const [loadingNoticias, setLoadingNoticias] = useState(true);
+  const [tagsNoticias, setTagsNoticias] = useState<WPTag[]>([]);
+  const [paraTi, setParaTi] = useState<any[]>([]);
+  const [loadingTags, setLoadingTags] = useState(true);
 
-  /* NOTICIAS — DESDE /locales/noticias/ */
+  /* ETIQUETAS DE NOTICIAS */
   useEffect(() => {
     fetch(
-      'https://goopiapp.com/wp-json/wp/v2/posts?categories_slug=noticias&per_page=6&_embed'
+      'https://goopiapp.com/wp-json/wp/v2/tags?search=noticias&per_page=20'
     )
       .then(res => {
-        if (!res.ok) throw new Error('Error noticias');
+        if (!res.ok) throw new Error('Error tags');
         return res.json();
       })
-      .then(setNoticias)
+      .then(setTagsNoticias)
       .catch(console.error)
-      .finally(() => setLoadingNoticias(false));
+      .finally(() => setLoadingTags(false));
   }, []);
 
-  /* PARA TI — POSTS GENERALES */
+  /* PARA TI (NO SE TOCA) */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=6&_embed'
@@ -111,7 +109,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* NOTICIAS */}
+            {/* NOTICIAS (ETIQUETAS) */}
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold flex items-center gap-2">
                 <Newspaper size={18} /> Noticias
@@ -126,54 +124,35 @@ export default function Home() {
             </div>
 
             {/* SKELETON */}
-            {loadingNoticias && (
-              <div className="flex gap-3 overflow-x-auto mb-6">
-                {[1, 2, 3].map(i => (
+            {loadingTags && (
+              <div className="flex gap-2 flex-wrap mb-6">
+                {[1, 2, 3, 4].map(i => (
                   <div
                     key={i}
-                    className="w-72 h-40 bg-gray-200 rounded-2xl animate-pulse"
+                    className="h-8 w-24 bg-gray-200 rounded-full animate-pulse"
                   />
                 ))}
               </div>
             )}
 
-            {/* NOTICIAS */}
-            {!loadingNoticias && (
-              <div className="flex gap-3 overflow-x-auto mb-6">
-                {noticias.map(post => {
-                  const img =
-                    post._embedded?.['wp:featuredmedia']?.[0]
-                      ?.source_url;
-
-                  return (
-                    <div
-                      key={post.id}
-                      onClick={() =>
-                        window.open(post.link, '_blank')
-                      }
-                      className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden cursor-pointer"
-                    >
-                      {img && (
-                        <img
-                          src={img}
-                          className="w-full aspect-[16/9] object-cover"
-                        />
-                      )}
-                      <div className="p-3">
-                        <h3
-                          className="font-semibold line-clamp-2"
-                          dangerouslySetInnerHTML={{
-                            __html: post.title.rendered,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* TAGS */}
+            {!loadingTags && (
+              <div className="flex gap-2 flex-wrap mb-6">
+                {tagsNoticias.map(tag => (
+                  <button
+                    key={tag.id}
+                    onClick={() =>
+                      window.open(tag.link, '_blank')
+                    }
+                    className="px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"
+                  >
+                    #{tag.name}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* PARA TI */}
+            {/* PARA TI (NO SE TOCA) */}
             <h2 className="font-bold mb-3">Para ti</h2>
 
             <div className="flex gap-3 overflow-x-auto mb-6">
