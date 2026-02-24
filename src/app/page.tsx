@@ -24,63 +24,11 @@ const REGISTRO_UNIDADES_WP =
 const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
-type WPPost = {
-  id: number;
-  tags: number[];
-};
-
-type WPTag = {
-  id: number;
-  name: string;
-  link: string;
-};
-
 export default function Home() {
   const [tab, setTab] = useState<'home' | 'mapa' | 'guia' | 'perfil'>(
     'home'
   );
-  const [tagsNoticias, setTagsNoticias] = useState<WPTag[]>([]);
   const [paraTi, setParaTi] = useState<any[]>([]);
-  const [loadingTags, setLoadingTags] = useState(true);
-
-  /* ETIQUETAS USADAS EN NOTICIAS */
-  useEffect(() => {
-    async function loadTagsFromNoticias() {
-      try {
-        // 1️⃣ Obtener posts de noticias
-        const postsRes = await fetch(
-          'https://goopiapp.com/wp-json/wp/v2/posts?categories_slug=noticias&per_page=10'
-        );
-        const posts: WPPost[] = await postsRes.json();
-
-        // 2️⃣ Extraer IDs únicos de etiquetas
-        const tagIds = Array.from(
-          new Set(posts.flatMap(p => p.tags))
-        );
-
-        if (tagIds.length === 0) {
-          setTagsNoticias([]);
-          return;
-        }
-
-        // 3️⃣ Obtener etiquetas reales
-        const tagsRes = await fetch(
-          `https://goopiapp.com/wp-json/wp/v2/tags?include=${tagIds.join(
-            ','
-          )}`
-        );
-        const tags: WPTag[] = await tagsRes.json();
-
-        setTagsNoticias(tags);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingTags(false);
-      }
-    }
-
-    loadTagsFromNoticias();
-  }, []);
 
   /* PARA TI (NO SE TOCA) */
   useEffect(() => {
@@ -138,7 +86,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* NOTICIAS (ETIQUETAS) */}
+            {/* NOTICIAS (IFRAME – SOLUCIÓN DEFINITIVA) */}
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold flex items-center gap-2">
                 <Newspaper size={18} /> Noticias
@@ -152,34 +100,10 @@ export default function Home() {
               </a>
             </div>
 
-            {/* SKELETON */}
-            {loadingTags && (
-              <div className="flex gap-2 flex-wrap mb-6">
-                {[1, 2, 3, 4].map(i => (
-                  <div
-                    key={i}
-                    className="h-8 w-24 bg-gray-200 rounded-full animate-pulse"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* TAGS REALES */}
-            {!loadingTags && (
-              <div className="flex gap-2 flex-wrap mb-6">
-                {tagsNoticias.map(tag => (
-                  <button
-                    key={tag.id}
-                    onClick={() =>
-                      window.open(tag.link, '_blank')
-                    }
-                    className="px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"
-                  >
-                    #{tag.name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <iframe
+              src={NOTICIAS_WP}
+              className="w-full h-[60vh] border-0 rounded-xl mb-6 bg-white"
+            />
 
             {/* PARA TI (NO SE TOCA) */}
             <h2 className="font-bold mb-3">Para ti</h2>
