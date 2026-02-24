@@ -6,71 +6,40 @@ import {
   MapPin,
   Bell,
   Search,
-  ChevronRight,
-  Newspaper,
   Car,
   Package,
-  Calendar,
 } from 'lucide-react';
 
 import { BottomNav } from '@/components/layout/BottomNav';
-import { GuiaComponent } from '@/components/guia/GuiaComponent';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store/useStore';
+import { NoticiasSection } from '@/components/noticias/NoticiasSection';
+
+/* ===== CONSTANTES WP ===== */
 
 const GOOPI_LOGO =
   'https://i0.wp.com/goopiapp.com/wp-content/uploads/2026/02/cropped-logo-png_Mesa-de-trabajo-1-copia.png?fit=2084%2C1890&ssl=1';
 
-const WP_MAP_URL = 'https://goopiapp.com/mapa/';
-const NEWS_CATEGORY_ID = 23; // ⬅️ CAMBIA AQUÍ EL ID REAL
-
-/* ===== TYPES ===== */
-
-type WPPost = {
-  id: number;
-  title: { rendered: string };
-  excerpt: { rendered: string };
-  date: string;
-  link: string;
-  _embedded?: {
-    ['wp:featuredmedia']?: Array<{ source_url: string }>;
-  };
-};
+const WP_MAP_URL = 'https://goopiapp.com/taxis-disponibles/';
+const WP_NOTICIAS_URL = 'https://goopiapp.com/locales/noticias/';
+const WP_REGISTRO_UNIDADES =
+  'https://goopiapp.com/registro-de-taxistas/';
+const WP_PUNTOS_URL = 'https://goopiapp.com/puntos/';
+const WP_REGISTRO_USUARIO = 'https://goopiapp.com/registro/';
 
 /* ===== HOME SCREEN ===== */
 
 function HomeScreen({
-  onServiceSelect,
+  goToMap,
 }: {
-  onServiceSelect: (service: string) => void;
+  goToMap: () => void;
 }) {
   const { user } = useAuth();
 
-  const [news, setNews] = useState<WPPost[]>([]);
-  const [paraTi, setParaTi] = useState<WPPost[]>([]);
-
-  /* 🔹 NOTICIAS DESDE CATEGORÍA */
-  useEffect(() => {
-    fetch(
-      `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=5&_embed`
-    )
-      .then((res) => res.json())
-      .then((data) => setNews(data));
-  }, []);
-
-  /* 🔹 PARA TI (POSTS GENERALES) */
-  useEffect(() => {
-    fetch(
-      'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
-    )
-      .then((res) => res.json())
-      .then((data) => setParaTi(data));
-  }, []);
-
   return (
     <div className="flex-1 overflow-y-auto pb-20">
-      {/* HEADER */}
+      {/* CABECERA */}
       <header className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 pt-4 pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -82,7 +51,9 @@ function HomeScreen({
             <div>
               <h1 className="text-white font-bold">Goopi</h1>
               <p className="text-purple-200 text-sm">
-                {user?.displayName ? `Hola ${user.displayName}` : '¡Hola! 👋'}
+                {user?.displayName
+                  ? `Hola ${user.displayName}`
+                  : '¡Hola! 👋'}
               </p>
             </div>
           </div>
@@ -99,10 +70,10 @@ function HomeScreen({
         </div>
       </header>
 
-      {/* TAXI / DELIVERY */}
+      {/* BOTONES TAXI / DELIVERY */}
       <section className="px-4 -mt-4 grid grid-cols-2 gap-3">
         <button
-          onClick={() => onServiceSelect('mapa')}
+          onClick={goToMap}
           className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl p-5 shadow-lg"
         >
           <Car className="mb-2" />
@@ -110,7 +81,7 @@ function HomeScreen({
         </button>
 
         <button
-          onClick={() => onServiceSelect('mapa')}
+          onClick={goToMap}
           className="bg-gradient-to-br from-blue-400 to-cyan-500 text-white rounded-2xl p-5 shadow-lg"
         >
           <Package className="mb-2" />
@@ -119,106 +90,35 @@ function HomeScreen({
       </section>
 
       {/* NOTICIAS */}
-      {news.length > 0 && (
-        <section className="px-4 mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold flex items-center gap-2">
-              <Newspaper className="text-purple-500" />
-              Noticias
-            </h2>
+      <NoticiasSection
+        verTodoUrl={WP_NOTICIAS_URL}
+      />
 
-            <a
-              href="https://goopiapp.com/locales/noticias/"
-              target="_blank"
-              className="text-purple-600 text-sm flex items-center gap-1"
-            >
-              Ver todo <ChevronRight className="w-4 h-4" />
-            </a>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto">
-            {news.map((post) => {
-              const image =
-                post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
-
-              return (
-                <div
-                  key={post.id}
-                  onClick={() => window.open(post.link, '_blank')}
-                  className="w-72 bg-white rounded-2xl shadow cursor-pointer overflow-hidden"
-                >
-                  {image && (
-                    <img
-                      src={image}
-                      className="h-32 w-full object-cover"
-                    />
-                  )}
-
-                  <div className="p-3">
-                    <h3
-                      className="font-semibold line-clamp-2"
-                      dangerouslySetInnerHTML={{
-                        __html: post.title.rendered,
-                      }}
-                    />
-                    <p
-                      className="text-sm text-gray-500 line-clamp-2"
-                      dangerouslySetInnerHTML={{
-                        __html: post.excerpt.rendered,
-                      }}
-                    />
-                    <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(post.date).toLocaleDateString('es-EC')}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* PARA TI */}
+      {/* ACUMULA PUNTOS */}
       <section className="px-4 mt-6">
-        <h2 className="font-bold mb-3">Para ti</h2>
+        <button
+          onClick={() =>
+            window.open(WP_PUNTOS_URL, '_blank')
+          }
+          className="w-full bg-yellow-400 text-black rounded-xl py-3 font-bold shadow"
+        >
+          Acumula puntos
+        </button>
+      </section>
 
-        <div className="flex gap-3 overflow-x-auto">
-          {paraTi.map((post) => {
-            const image =
-              post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
+      {/* PARA TI (SE DEJA PARA POSTS GENERALES DESPUÉS) */}
+      {/* Aquí luego puedes poner ParaTiSection */}
 
-            return (
-              <div
-                key={post.id}
-                onClick={() => window.open(post.link, '_blank')}
-                className="w-72 bg-white rounded-2xl shadow cursor-pointer overflow-hidden"
-              >
-                {image && (
-                  <img
-                    src={image}
-                    className="h-28 w-full object-cover"
-                  />
-                )}
-
-                <div className="p-3">
-                  <h3
-                    className="font-semibold line-clamp-1"
-                    dangerouslySetInnerHTML={{
-                      __html: post.title.rendered,
-                    }}
-                  />
-                  <p
-                    className="text-sm text-gray-500 line-clamp-2"
-                    dangerouslySetInnerHTML={{
-                      __html: post.excerpt.rendered,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* REGISTRO UNIDADES */}
+      <section className="px-4 mt-8">
+        <button
+          onClick={() =>
+            window.open(WP_REGISTRO_UNIDADES, '_blank')
+          }
+          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl py-3 font-semibold"
+        >
+          Registrar unidades
+        </button>
       </section>
     </div>
   );
@@ -239,24 +139,37 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <AnimatePresence mode="wait">
         {activeTab === 'home' && (
-          <HomeScreen onServiceSelect={setActiveTab} />
-        )}
-
-        {activeTab === 'mapa' && (
-          <iframe
-            src={WP_MAP_URL}
-            className="flex-1 w-full border-0"
-            loading="lazy"
+          <HomeScreen
+            goToMap={() => setActiveTab('mapa')}
           />
         )}
 
-        {activeTab === 'guia' && <GuiaComponent />}
+        {/* MAPA WP */}
+        {activeTab === 'mapa' && (
+          <div className="flex-1 flex flex-col">
+            <iframe
+              src={WP_MAP_URL}
+              className="flex-1 w-full border-0"
+              loading="lazy"
+            />
+          </div>
+        )}
 
+        {/* PERFIL */}
         {activeTab === 'perfil' && (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <button
+              onClick={() =>
+                window.open(WP_REGISTRO_USUARIO, '_blank')
+              }
+              className="w-64 bg-purple-600 text-white py-3 rounded-xl font-semibold"
+            >
+              Registrarse
+            </button>
+
             <button
               onClick={() => setShowAuthModal(true)}
-              className="text-purple-600 font-semibold"
+              className="w-64 border border-purple-600 text-purple-600 py-3 rounded-xl font-semibold"
             >
               Iniciar sesión
             </button>
@@ -264,7 +177,10 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <AuthModal
         isOpen={showAuthModal}
