@@ -1,191 +1,174 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Bell,
   Search,
   Car,
   Package,
+  Newspaper,
+  Calendar,
 } from 'lucide-react';
 
-import { BottomNav } from '@/components/layout/BottomNav';
-import { AuthModal } from '@/components/auth/AuthModal';
-import { useAuth } from '@/hooks/useAuth';
-import { useAppStore } from '@/store/useStore';
-import { NoticiasSection } from '@/components/noticias/NoticiasSection';
-
-/* ===== CONSTANTES WP ===== */
-
-const GOOPI_LOGO =
-  'https://i0.wp.com/goopiapp.com/wp-content/uploads/2026/02/cropped-logo-png_Mesa-de-trabajo-1-copia.png?fit=2084%2C1890&ssl=1';
-
-const WP_MAP_URL = 'https://goopiapp.com/taxis-disponibles/';
-const WP_NOTICIAS_URL = 'https://goopiapp.com/locales/noticias/';
-const WP_REGISTRO_UNIDADES =
+/* ===== LINKS WP ===== */
+const MAPA_WP = 'https://goopiapp.com/taxis-disponibles/';
+const NOTICIAS_WP = 'https://goopiapp.com/locales/noticias/';
+const REGISTRO_UNIDADES_WP =
   'https://goopiapp.com/registro-de-taxistas/';
-const WP_PUNTOS_URL = 'https://goopiapp.com/puntos/';
-const WP_REGISTRO_USUARIO = 'https://goopiapp.com/registro/';
+const PUNTOS_WP = 'https://goopiapp.com/puntos/';
+const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
-/* ===== HOME SCREEN ===== */
+/* ===== HOME ===== */
+export default function Home() {
+  const [tab, setTab] = useState<'home' | 'mapa' | 'perfil'>('home');
+  const [news, setNews] = useState<any[]>([]);
 
-function HomeScreen({
-  goToMap,
-}: {
-  goToMap: () => void;
-}) {
-  const { user } = useAuth();
+  /* NOTICIAS DESDE CATEGORÍA */
+  useEffect(() => {
+    fetch(
+      'https://goopiapp.com/wp-json/wp/v2/posts?categories=23&_embed'
+    )
+      .then(res => res.json())
+      .then(setNews);
+  }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* CABECERA */}
-      <header className="bg-gradient-to-r from-purple-600 to-purple-700 px-4 pt-4 pb-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={GOOPI_LOGO}
-              alt="Goopi"
-              className="w-12 h-12 rounded-xl bg-white/20 p-1"
-            />
-            <div>
-              <h1 className="text-white font-bold">Goopi</h1>
-              <p className="text-purple-200 text-sm">
-                {user?.displayName
-                  ? `Hola ${user.displayName}`
-                  : '¡Hola! 👋'}
-              </p>
-            </div>
-          </div>
-
+      <header className="bg-purple-700 text-white p-4">
+        <div className="flex justify-between items-center">
+          <h1 className="font-bold text-lg">Goopi</h1>
           <div className="flex gap-2">
-            <Search className="text-white" />
-            <Bell className="text-white" />
+            <Search />
+            <Bell />
           </div>
         </div>
-
-        <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl text-white">
-          <MapPin className="w-4 h-4" />
-          Macas, Ecuador
+        <div className="flex items-center gap-2 mt-2 text-sm">
+          <MapPin size={14} /> Macas, Ecuador
         </div>
       </header>
 
-      {/* BOTONES TAXI / DELIVERY */}
-      <section className="px-4 -mt-4 grid grid-cols-2 gap-3">
-        <button
-          onClick={goToMap}
-          className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl p-5 shadow-lg"
-        >
-          <Car className="mb-2" />
-          <h3 className="font-bold">Pedir Taxi</h3>
-        </button>
+      {/* CONTENIDO */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* HOME */}
+        {tab === 'home' && (
+          <>
+            {/* TAXI / DELIVERY */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => setTab('mapa')}
+                className="bg-orange-500 text-white rounded-xl p-4"
+              >
+                <Car className="mb-2" /> Pedir Taxi
+              </button>
 
-        <button
-          onClick={goToMap}
-          className="bg-gradient-to-br from-blue-400 to-cyan-500 text-white rounded-2xl p-5 shadow-lg"
-        >
-          <Package className="mb-2" />
-          <h3 className="font-bold">Delivery</h3>
-        </button>
-      </section>
+              <button
+                onClick={() => setTab('mapa')}
+                className="bg-cyan-500 text-white rounded-xl p-4"
+              >
+                <Package className="mb-2" /> Delivery
+              </button>
+            </div>
 
-      {/* NOTICIAS */}
-      <NoticiasSection
-        verTodoUrl={WP_NOTICIAS_URL}
-      />
+            {/* NOTICIAS */}
+            <h2 className="font-bold flex items-center gap-2 mb-2">
+              <Newspaper /> Noticias
+            </h2>
 
-      {/* ACUMULA PUNTOS */}
-      <section className="px-4 mt-6">
-        <button
-          onClick={() =>
-            window.open(WP_PUNTOS_URL, '_blank')
-          }
-          className="w-full bg-yellow-400 text-black rounded-xl py-3 font-bold shadow"
-        >
-          Acumula puntos
-        </button>
-      </section>
+            <div className="flex gap-3 overflow-x-auto mb-6">
+              {news.map(post => {
+                const img =
+                  post._embedded?.['wp:featuredmedia']?.[0]
+                    ?.source_url;
 
-      {/* PARA TI (SE DEJA PARA POSTS GENERALES DESPUÉS) */}
-      {/* Aquí luego puedes poner ParaTiSection */}
+                return (
+                  <div
+                    key={post.id}
+                    onClick={() =>
+                      window.open(post.link, '_blank')
+                    }
+                    className="w-72 bg-white rounded-xl shadow overflow-hidden"
+                  >
+                    {img && (
+                      <img
+                        src={img}
+                        className="h-32 w-full object-cover"
+                      />
+                    )}
+                    <div className="p-3">
+                      <h3
+                        className="font-semibold"
+                        dangerouslySetInnerHTML={{
+                          __html: post.title.rendered,
+                        }}
+                      />
+                      <div className="text-xs text-gray-400 mt-2 flex gap-1">
+                        <Calendar size={12} />
+                        {new Date(
+                          post.date
+                        ).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-      {/* REGISTRO UNIDADES */}
-      <section className="px-4 mt-8">
-        <button
-          onClick={() =>
-            window.open(WP_REGISTRO_UNIDADES, '_blank')
-          }
-          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl py-3 font-semibold"
-        >
-          Registrar unidades
-        </button>
-      </section>
-    </div>
-  );
-}
+            {/* ACUMULA PUNTOS */}
+            <button
+              onClick={() =>
+                window.open(PUNTOS_WP, '_blank')
+              }
+              className="w-full bg-yellow-400 rounded-xl py-3 font-bold mb-4"
+            >
+              Acumula puntos
+            </button>
 
-/* ===== APP ROOT ===== */
+            {/* REGISTRO UNIDADES */}
+            <button
+              onClick={() =>
+                window.open(REGISTRO_UNIDADES_WP, '_blank')
+              }
+              className="w-full bg-purple-600 text-white rounded-xl py-3 font-bold"
+            >
+              Registro de unidades
+            </button>
+          </>
+        )}
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { setActiveTab: setStoreTab } = useAppStore();
-
-  useEffect(() => {
-    setStoreTab(activeTab);
-  }, [activeTab, setStoreTab]);
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <AnimatePresence mode="wait">
-        {activeTab === 'home' && (
-          <HomeScreen
-            goToMap={() => setActiveTab('mapa')}
+        {/* MAPA */}
+        {tab === 'mapa' && (
+          <iframe
+            src={MAPA_WP}
+            className="w-full h-[80vh] border-0"
           />
         )}
 
-        {/* MAPA WP */}
-        {activeTab === 'mapa' && (
-          <div className="flex-1 flex flex-col">
-            <iframe
-              src={WP_MAP_URL}
-              className="flex-1 w-full border-0"
-              loading="lazy"
-            />
-          </div>
-        )}
-
         {/* PERFIL */}
-        {activeTab === 'perfil' && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        {tab === 'perfil' && (
+          <div className="flex flex-col gap-4 mt-10">
             <button
               onClick={() =>
-                window.open(WP_REGISTRO_USUARIO, '_blank')
+                window.open(REGISTRO_WP, '_blank')
               }
-              className="w-64 bg-purple-600 text-white py-3 rounded-xl font-semibold"
+              className="bg-purple-600 text-white py-3 rounded-xl"
             >
               Registrarse
             </button>
-
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="w-64 border border-purple-600 text-purple-600 py-3 rounded-xl font-semibold"
-            >
+            <button className="border border-purple-600 text-purple-600 py-3 rounded-xl">
               Iniciar sesión
             </button>
           </div>
         )}
-      </AnimatePresence>
+      </div>
 
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
+      {/* MENÚ INFERIOR */}
+      <nav className="flex justify-around border-t bg-white py-3">
+        <button onClick={() => setTab('home')}>Inicio</button>
+        <button onClick={() => setTab('mapa')}>Mapa</button>
+        <button onClick={() => setTab('perfil')}>Perfil</button>
+      </nav>
     </div>
   );
 }
