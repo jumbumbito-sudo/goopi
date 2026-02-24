@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Home,
+  Home as HomeIcon,
   Map as MapIcon,
   BookOpen,
   User,
@@ -25,7 +25,7 @@ const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
 /* ID CATEGORÍA NOTICIAS */
-const NEWS_CATEGORY_ID = 23; // AJUSTA SI CAMBIA
+const NEWS_CATEGORY_ID = 23;
 
 type WPPost = {
   id: number;
@@ -45,22 +45,30 @@ export default function Home() {
   const [noticias, setNoticias] = useState<WPPost[]>([]);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
 
-  /* NOTICIAS (CATEGORÍA NOTICIAS) */
+  /* NOTICIAS */
   useEffect(() => {
     fetch(
       `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=6&_embed`
     )
-      .then(res => res.json())
-      .then(setNoticias);
+      .then(res => {
+        if (!res.ok) throw new Error('Error cargando noticias');
+        return res.json();
+      })
+      .then(setNoticias)
+      .catch(console.error);
   }, []);
 
-  /* PARA TI (POSTS GENERALES) */
+  /* PARA TI */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=6&_embed'
     )
-      .then(res => res.json())
-      .then(setParaTi);
+      .then(res => {
+        if (!res.ok) throw new Error('Error cargando posts');
+        return res.json();
+      })
+      .then(setParaTi)
+      .catch(console.error);
   }, []);
 
   return (
@@ -81,10 +89,9 @@ export default function Home() {
 
       {/* CONTENIDO */}
       <main className="flex-1 overflow-y-auto p-4">
-        {/* INICIO */}
         {tab === 'home' && (
           <>
-            {/* TAXI / DELIVERY (NO MODIFICADOS) */}
+            {/* TAXI / DELIVERY */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               <button
                 onClick={() => setTab('mapa')}
@@ -117,7 +124,7 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto flex-nowrap touch-pan-x mb-6">
+            <div className="flex gap-3 overflow-x-auto mb-6">
               {noticias.map(post => {
                 const img =
                   post._embedded?.['wp:featuredmedia']?.[0]
@@ -129,7 +136,7 @@ export default function Home() {
                     onClick={() =>
                       window.open(post.link, '_blank')
                     }
-                    className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden"
+                    className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden cursor-pointer"
                   >
                     {img && (
                       <img
@@ -153,7 +160,7 @@ export default function Home() {
             {/* PARA TI */}
             <h2 className="font-bold mb-3">Para ti</h2>
 
-            <div className="flex gap-3 overflow-x-auto flex-nowrap touch-pan-x mb-6">
+            <div className="flex gap-3 overflow-x-auto mb-6">
               {paraTi.map(post => {
                 const img =
                   post._embedded?.['wp:featuredmedia']?.[0]
@@ -165,7 +172,7 @@ export default function Home() {
                     onClick={() =>
                       window.open(post.link, '_blank')
                     }
-                    className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden"
+                    className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden cursor-pointer"
                   >
                     {img && (
                       <img
@@ -186,17 +193,13 @@ export default function Home() {
               })}
             </div>
 
-            {/* ACUMULA PUNTOS */}
             <button
-              onClick={() =>
-                window.open(PUNTOS_WP, '_blank')
-              }
+              onClick={() => window.open(PUNTOS_WP, '_blank')}
               className="w-full bg-yellow-400 rounded-xl py-3 font-bold mb-4"
             >
               Acumula puntos
             </button>
 
-            {/* REGISTRO UNIDADES */}
             <button
               onClick={() =>
                 window.open(REGISTRO_UNIDADES_WP, '_blank')
@@ -208,7 +211,6 @@ export default function Home() {
           </>
         )}
 
-        {/* MAPA (INTACTO) */}
         {tab === 'mapa' && (
           <iframe
             src={MAPA_WP}
@@ -216,10 +218,8 @@ export default function Home() {
           />
         )}
 
-        {/* GUÍA */}
         {tab === 'guia' && <GuiaComponent />}
 
-        {/* PERFIL */}
         {tab === 'perfil' && (
           <div className="flex flex-col gap-4 mt-10">
             <button
@@ -237,7 +237,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* MENÚ INFERIOR CON ICONOS */}
+      {/* MENÚ INFERIOR */}
       <nav className="flex justify-around border-t bg-white py-2">
         <button
           onClick={() => setTab('home')}
@@ -245,7 +245,7 @@ export default function Home() {
             tab === 'home' ? 'text-purple-600' : 'text-gray-400'
           }`}
         >
-          <Home size={20} />
+          <HomeIcon size={20} />
           Inicio
         </button>
 
