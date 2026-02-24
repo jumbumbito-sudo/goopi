@@ -23,17 +23,9 @@ const GOOPI_LOGO =
   'https://i0.wp.com/goopiapp.com/wp-content/uploads/2026/02/cropped-logo-png_Mesa-de-trabajo-1-copia.png?fit=2084%2C1890&ssl=1';
 
 const WP_MAP_URL = 'https://goopiapp.com/mapa/';
+const NEWS_CATEGORY_ID = 23; // ⬅️ CAMBIA AQUÍ EL ID REAL
 
 /* ===== TYPES ===== */
-
-type WPPage = {
-  id: number;
-  title: { rendered: string };
-  excerpt: { rendered: string };
-  _embedded?: {
-    ['wp:featuredmedia']?: Array<{ source_url: string }>;
-  };
-};
 
 type WPPost = {
   id: number;
@@ -55,19 +47,19 @@ function HomeScreen({
 }) {
   const { user } = useAuth();
 
-  const [newsPage, setNewsPage] = useState<WPPage | null>(null);
+  const [news, setNews] = useState<WPPost[]>([]);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
 
-  /* NOTICIAS (PÁGINA WP CON IMAGEN) */
+  /* 🔹 NOTICIAS DESDE CATEGORÍA */
   useEffect(() => {
     fetch(
-      'https://goopiapp.com/wp-json/wp/v2/pages?slug=noticias&_embed'
+      `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=5&_embed`
     )
       .then((res) => res.json())
-      .then((data) => setNewsPage(data?.[0] ?? null));
+      .then((data) => setNews(data));
   }, []);
 
-  /* PARA TI (POSTS CON IMAGEN) */
+  /* 🔹 PARA TI (POSTS GENERALES) */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
@@ -75,9 +67,6 @@ function HomeScreen({
       .then((res) => res.json())
       .then((data) => setParaTi(data));
   }, []);
-
-  const newsImage =
-    newsPage?._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
   return (
     <div className="flex-1 overflow-y-auto pb-20">
@@ -130,7 +119,7 @@ function HomeScreen({
       </section>
 
       {/* NOTICIAS */}
-      {newsPage && (
+      {news.length > 0 && (
         <section className="px-4 mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold flex items-center gap-2">
@@ -139,7 +128,7 @@ function HomeScreen({
             </h2>
 
             <a
-              href="https://goopiapp.com/noticias/"
+              href="https://goopiapp.com/locales/noticias/"
               target="_blank"
               className="text-purple-600 text-sm flex items-center gap-1"
             >
@@ -147,20 +136,45 @@ function HomeScreen({
             </a>
           </div>
 
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
-            {newsImage && (
-              <img
-                src={newsImage}
-                className="w-full h-40 object-cover"
-              />
-            )}
+          <div className="flex gap-3 overflow-x-auto">
+            {news.map((post) => {
+              const image =
+                post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
-            <div
-              className="p-4 prose max-w-none"
-              dangerouslySetInnerHTML={{
-                __html: newsPage.excerpt.rendered,
-              }}
-            />
+              return (
+                <div
+                  key={post.id}
+                  onClick={() => window.open(post.link, '_blank')}
+                  className="w-72 bg-white rounded-2xl shadow cursor-pointer overflow-hidden"
+                >
+                  {image && (
+                    <img
+                      src={image}
+                      className="h-32 w-full object-cover"
+                    />
+                  )}
+
+                  <div className="p-3">
+                    <h3
+                      className="font-semibold line-clamp-2"
+                      dangerouslySetInnerHTML={{
+                        __html: post.title.rendered,
+                      }}
+                    />
+                    <p
+                      className="text-sm text-gray-500 line-clamp-2"
+                      dangerouslySetInnerHTML={{
+                        __html: post.excerpt.rendered,
+                      }}
+                    />
+                    <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(post.date).toLocaleDateString('es-EC')}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -200,30 +214,11 @@ function HomeScreen({
                       __html: post.excerpt.rendered,
                     }}
                   />
-                  <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(post.date).toLocaleDateString('es-EC')}
-                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
-
-      {/* REGISTRO */}
-      <section className="px-4 mt-8">
-        <button
-          onClick={() =>
-            window.open(
-              'https://goopiapp.com/registro-de-taxistas/',
-              '_blank'
-            )
-          }
-          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl py-3 font-semibold"
-        >
-          Registrar tu unidad
-        </button>
       </section>
     </div>
   );
@@ -248,13 +243,11 @@ export default function Home() {
         )}
 
         {activeTab === 'mapa' && (
-          <div className="flex-1">
-            <iframe
-              src={WP_MAP_URL}
-              className="w-full h-full border-0"
-              loading="lazy"
-            />
-          </div>
+          <iframe
+            src={WP_MAP_URL}
+            className="flex-1 w-full border-0"
+            loading="lazy"
+          />
         )}
 
         {activeTab === 'guia' && <GuiaComponent />}
