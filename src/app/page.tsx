@@ -44,6 +44,7 @@ export default function Home() {
   );
   const [noticias, setNoticias] = useState<WPPost[]>([]);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
+  const [loadingNoticias, setLoadingNoticias] = useState(true);
 
   /* NOTICIAS */
   useEffect(() => {
@@ -51,11 +52,12 @@ export default function Home() {
       `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=6&_embed`
     )
       .then(res => {
-        if (!res.ok) throw new Error('Error cargando noticias');
+        if (!res.ok) throw new Error('Error noticias');
         return res.json();
       })
-      .then(setNoticias)
-      .catch(console.error);
+      .then(data => setNoticias(data))
+      .catch(console.error)
+      .finally(() => setLoadingNoticias(false));
   }, []);
 
   /* PARA TI */
@@ -63,10 +65,7 @@ export default function Home() {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=6&_embed'
     )
-      .then(res => {
-        if (!res.ok) throw new Error('Error cargando posts');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(setParaTi)
       .catch(console.error);
   }, []);
@@ -76,7 +75,14 @@ export default function Home() {
       {/* CABECERA */}
       <header className="bg-purple-700 text-white p-4">
         <div className="flex justify-between items-center">
-          <h1 className="font-bold text-lg">Goopi</h1>
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo.png"
+              alt="Goopi"
+              className="h-8 w-auto"
+            />
+            <h1 className="font-bold text-lg">Goopi</h1>
+          </div>
           <div className="flex gap-2">
             <Search />
             <Bell />
@@ -124,38 +130,56 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto mb-6">
-              {noticias.map(post => {
-                const img =
-                  post._embedded?.['wp:featuredmedia']?.[0]
-                    ?.source_url;
-
-                return (
+            {/* SKELETON */}
+            {loadingNoticias && (
+              <div className="flex gap-3 overflow-x-auto mb-6">
+                {[1, 2, 3].map(i => (
                   <div
-                    key={post.id}
-                    onClick={() =>
-                      window.open(post.link, '_blank')
-                    }
-                    className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden cursor-pointer"
-                  >
-                    {img && (
-                      <img
-                        src={img}
-                        className="w-full aspect-[16/9] object-cover"
-                      />
-                    )}
-                    <div className="p-3">
-                      <h3
-                        className="font-semibold line-clamp-2"
-                        dangerouslySetInnerHTML={{
-                          __html: post.title.rendered,
-                        }}
-                      />
+                    key={i}
+                    className="w-72 h-40 bg-gray-200 rounded-2xl animate-pulse"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* NOTICIAS / FALLBACK */}
+            {!loadingNoticias && (
+              <div className="flex gap-3 overflow-x-auto mb-6">
+                {(noticias.length > 0
+                  ? noticias
+                  : paraTi
+                ).map(post => {
+                  const img =
+                    post._embedded?.['wp:featuredmedia']?.[0]
+                      ?.source_url;
+
+                  return (
+                    <div
+                      key={post.id}
+                      onClick={() =>
+                        window.open(post.link, '_blank')
+                      }
+                      className="w-72 shrink-0 bg-white rounded-2xl shadow overflow-hidden cursor-pointer"
+                    >
+                      {img && (
+                        <img
+                          src={img}
+                          className="w-full aspect-[16/9] object-cover"
+                        />
+                      )}
+                      <div className="p-3">
+                        <h3
+                          className="font-semibold line-clamp-2"
+                          dangerouslySetInnerHTML={{
+                            __html: post.title.rendered,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* PARA TI */}
             <h2 className="font-bold mb-3">Para ti</h2>
