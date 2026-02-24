@@ -9,7 +9,12 @@ import {
   Package,
   Newspaper,
   Calendar,
+  BookOpen,
+  User,
+  Map,
 } from 'lucide-react';
+
+import { GuiaComponent } from '@/components/guia/GuiaComponent';
 
 /* ===== LINKS WP ===== */
 const MAPA_WP = 'https://goopiapp.com/taxis-disponibles/';
@@ -19,18 +24,43 @@ const REGISTRO_UNIDADES_WP =
 const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
-/* ===== HOME ===== */
-export default function Home() {
-  const [tab, setTab] = useState<'home' | 'mapa' | 'perfil'>('home');
-  const [news, setNews] = useState<any[]>([]);
+/* ID de la categoría NOTICIAS */
+const NEWS_CATEGORY_ID = 23; // 👈 AJUSTA SI ES NECESARIO
 
-  /* NOTICIAS DESDE CATEGORÍA */
+type WPPost = {
+  id: number;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  date: string;
+  link: string;
+  _embedded?: {
+    ['wp:featuredmedia']?: Array<{ source_url: string }>;
+  };
+};
+
+export default function Home() {
+  const [tab, setTab] = useState<'home' | 'mapa' | 'guia' | 'perfil'>(
+    'home'
+  );
+  const [noticias, setNoticias] = useState<WPPost[]>([]);
+  const [paraTi, setParaTi] = useState<WPPost[]>([]);
+
+  /* NOTICIAS (CATEGORÍA NOTICIAS) */
   useEffect(() => {
     fetch(
-      'https://goopiapp.com/wp-json/wp/v2/posts?categories=23&_embed'
+      `https://goopiapp.com/wp-json/wp/v2/posts?categories=${NEWS_CATEGORY_ID}&per_page=5&_embed`
     )
       .then(res => res.json())
-      .then(setNews);
+      .then(setNoticias);
+  }, []);
+
+  /* PARA TI (POSTS GENERALES) */
+  useEffect(() => {
+    fetch(
+      'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
+    )
+      .then(res => res.json())
+      .then(setParaTi);
   }, []);
 
   return (
@@ -51,10 +81,10 @@ export default function Home() {
 
       {/* CONTENIDO */}
       <div className="flex-1 overflow-y-auto p-4">
-        {/* HOME */}
+        {/* INICIO */}
         {tab === 'home' && (
           <>
-            {/* TAXI / DELIVERY */}
+            {/* TAXI / DELIVERY (NO SE TOCAN) */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               <button
                 onClick={() => setTab('mapa')}
@@ -77,7 +107,7 @@ export default function Home() {
             </h2>
 
             <div className="flex gap-3 overflow-x-auto mb-6">
-              {news.map(post => {
+              {noticias.map(post => {
                 const img =
                   post._embedded?.['wp:featuredmedia']?.[0]
                     ?.source_url;
@@ -107,8 +137,44 @@ export default function Home() {
                         <Calendar size={12} />
                         {new Date(
                           post.date
-                        ).toLocaleDateString()}
+                        ).toLocaleDateString('es-EC')}
                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* PARA TI */}
+            <h2 className="font-bold mb-2">Para ti</h2>
+
+            <div className="flex gap-3 overflow-x-auto mb-6">
+              {paraTi.map(post => {
+                const img =
+                  post._embedded?.['wp:featuredmedia']?.[0]
+                    ?.source_url;
+
+                return (
+                  <div
+                    key={post.id}
+                    onClick={() =>
+                      window.open(post.link, '_blank')
+                    }
+                    className="w-72 bg-white rounded-xl shadow overflow-hidden"
+                  >
+                    {img && (
+                      <img
+                        src={img}
+                        className="h-28 w-full object-cover"
+                      />
+                    )}
+                    <div className="p-3">
+                      <h3
+                        className="font-semibold"
+                        dangerouslySetInnerHTML={{
+                          __html: post.title.rendered,
+                        }}
+                      />
                     </div>
                   </div>
                 );
@@ -145,6 +211,9 @@ export default function Home() {
           />
         )}
 
+        {/* GUÍA */}
+        {tab === 'guia' && <GuiaComponent />}
+
         {/* PERFIL */}
         {tab === 'perfil' && (
           <div className="flex flex-col gap-4 mt-10">
@@ -165,9 +234,18 @@ export default function Home() {
 
       {/* MENÚ INFERIOR */}
       <nav className="flex justify-around border-t bg-white py-3">
-        <button onClick={() => setTab('home')}>Inicio</button>
-        <button onClick={() => setTab('mapa')}>Mapa</button>
-        <button onClick={() => setTab('perfil')}>Perfil</button>
+        <button onClick={() => setTab('home')}>
+          Inicio
+        </button>
+        <button onClick={() => setTab('mapa')}>
+          Mapa
+        </button>
+        <button onClick={() => setTab('guia')}>
+          Guía
+        </button>
+        <button onClick={() => setTab('perfil')}>
+          Perfil
+        </button>
       </nav>
     </div>
   );
