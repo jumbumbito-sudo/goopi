@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Bell,
@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 
 import { BottomNav } from '@/components/layout/BottomNav';
-import { MapComponent } from '@/components/mapa/MapComponent';
 import { GuiaComponent } from '@/components/guia/GuiaComponent';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,13 +22,14 @@ import { useAppStore } from '@/store/useStore';
 const GOOPI_LOGO =
   'https://i0.wp.com/goopiapp.com/wp-content/uploads/2026/02/cropped-logo-png_Mesa-de-trabajo-1-copia.png?fit=2084%2C1890&ssl=1';
 
+const WP_MAP_URL = 'https://goopiapp.com/mapa/';
+
 /* ===== TYPES ===== */
 
 type WPPage = {
   id: number;
   title: { rendered: string };
   excerpt: { rendered: string };
-  content: { rendered: string };
   _embedded?: {
     ['wp:featuredmedia']?: Array<{ source_url: string }>;
   };
@@ -58,16 +58,16 @@ function HomeScreen({
   const [newsPage, setNewsPage] = useState<WPPage | null>(null);
   const [paraTi, setParaTi] = useState<WPPost[]>([]);
 
-  /* 🔹 Cargar SOLO la página /noticias/ con imagen */
+  /* NOTICIAS (PÁGINA WP CON IMAGEN) */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/pages?slug=noticias&_embed'
     )
       .then((res) => res.json())
-      .then((data) => setNewsPage(data[0]));
+      .then((data) => setNewsPage(data?.[0] ?? null));
   }, []);
 
-  /* 🔹 Cargar posts para "Para ti" con imagen */
+  /* PARA TI (POSTS CON IMAGEN) */
   useEffect(() => {
     fetch(
       'https://goopiapp.com/wp-json/wp/v2/posts?per_page=5&_embed'
@@ -129,7 +129,7 @@ function HomeScreen({
         </button>
       </section>
 
-      {/* NOTICIAS = PÁGINA */}
+      {/* NOTICIAS */}
       {newsPage && (
         <section className="px-4 mt-8">
           <div className="flex items-center justify-between mb-3">
@@ -248,13 +248,12 @@ export default function Home() {
         )}
 
         {activeTab === 'mapa' && (
-          <div className="flex-1 relative">
-            <div
-              className="absolute inset-0"
-              style={{ bottom: '64px' }}
-            >
-              <MapComponent />
-            </div>
+          <div className="flex-1">
+            <iframe
+              src={WP_MAP_URL}
+              className="w-full h-full border-0"
+              loading="lazy"
+            />
           </div>
         )}
 
