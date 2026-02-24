@@ -24,10 +24,14 @@ const REGISTRO_UNIDADES_WP =
 const PUNTOS_WP = 'https://goopiapp.com/puntos/';
 const REGISTRO_WP = 'https://goopiapp.com/registro/';
 
+type WPPost = {
+  id: number;
+  tags: number[];
+};
+
 type WPTag = {
   id: number;
   name: string;
-  slug: string;
   link: string;
 };
 
@@ -39,18 +43,43 @@ export default function Home() {
   const [paraTi, setParaTi] = useState<any[]>([]);
   const [loadingTags, setLoadingTags] = useState(true);
 
-  /* ETIQUETAS DE NOTICIAS */
+  /* ETIQUETAS USADAS EN NOTICIAS */
   useEffect(() => {
-    fetch(
-      'https://goopiapp.com/wp-json/wp/v2/tags?search=noticias&per_page=20'
-    )
-      .then(res => {
-        if (!res.ok) throw new Error('Error tags');
-        return res.json();
-      })
-      .then(setTagsNoticias)
-      .catch(console.error)
-      .finally(() => setLoadingTags(false));
+    async function loadTagsFromNoticias() {
+      try {
+        // 1️⃣ Obtener posts de noticias
+        const postsRes = await fetch(
+          'https://goopiapp.com/wp-json/wp/v2/posts?categories_slug=noticias&per_page=10'
+        );
+        const posts: WPPost[] = await postsRes.json();
+
+        // 2️⃣ Extraer IDs únicos de etiquetas
+        const tagIds = Array.from(
+          new Set(posts.flatMap(p => p.tags))
+        );
+
+        if (tagIds.length === 0) {
+          setTagsNoticias([]);
+          return;
+        }
+
+        // 3️⃣ Obtener etiquetas reales
+        const tagsRes = await fetch(
+          `https://goopiapp.com/wp-json/wp/v2/tags?include=${tagIds.join(
+            ','
+          )}`
+        );
+        const tags: WPTag[] = await tagsRes.json();
+
+        setTagsNoticias(tags);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingTags(false);
+      }
+    }
+
+    loadTagsFromNoticias();
   }, []);
 
   /* PARA TI (NO SE TOCA) */
@@ -135,7 +164,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* TAGS */}
+            {/* TAGS REALES */}
             {!loadingTags && (
               <div className="flex gap-2 flex-wrap mb-6">
                 {tagsNoticias.map(tag => (
