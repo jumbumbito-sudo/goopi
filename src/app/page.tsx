@@ -86,24 +86,21 @@ export default function Home() {
               </button>
             </div>
 
-            {/* NOTICIAS (IFRAME – SOLUCIÓN DEFINITIVA) */}
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold flex items-center gap-2">
+            {/* NOTICIAS (BOTÓN GRANDE) */}
+            <div className="mb-6">
+              <h2 className="font-bold flex items-center gap-2 mb-3">
                 <Newspaper size={18} /> Noticias
               </h2>
-              <a
-                href={NOTICIAS_WP}
-                target="_blank"
-                className="text-sm text-purple-600"
-              >
-                Ver todo
-              </a>
-            </div>
 
-            <iframe
-              src={NOTICIAS_WP}
-              className="w-full h-[60vh] border-0 rounded-xl mb-6 bg-white"
-            />
+              <button
+                onClick={() =>
+                  window.open(NOTICIAS_WP, '_blank')
+                }
+                className="w-full bg-purple-600 text-white rounded-2xl py-4 text-lg font-bold shadow"
+              >
+                Ver noticias
+              </button>
+            </div>
 
             {/* PARA TI (NO SE TOCA) */}
             <h2 className="font-bold mb-3">Para ti</h2>
