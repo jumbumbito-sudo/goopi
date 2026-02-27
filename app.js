@@ -1,7 +1,7 @@
 /**
- * GoopiApp - Core Logic (Tokyo Midnight Pro Edition v32.0)
+ * GoopiApp - Core Logic (Tokyo Midnight Pro Edition v35.1)
  */
-console.log("🚀 GOOPIAPP VERSION 32.0 LOADED");
+console.log("🚀 GOOPIAPP VERSION 35.1 LOADED");
 
 const wpConfig = {
     url: "https://goopiapp.com/wp-json",
@@ -14,7 +14,8 @@ const state = {
     posts: [],
     communityPosts: [],
     userFavorites: {},
-    userPoints: 100
+    userPoints: 100,
+    isMuted: true // Start muted for better PWA experience
 };
 
 // Firebase Safe-Initialization
@@ -203,7 +204,7 @@ function renderView(view, container) {
                     <h1 style="text-shadow: 0 0 10px var(--secondary-lilac);">¡Hola, Gooper!</h1>
                     <p>¿Qué necesitas hoy?</p>
                 </section>
-                <div class="quick-actions" style="margin-bottom: 20px;">
+                <div class="quick-actions" style="margin-bottom: 10px;">
                     <a href="#" class="action-card taxi" onclick="navigate('taxi')">
                         <i class="fas fa-taxi"></i>
                         <span>Pide un Taxi</span>
@@ -214,6 +215,11 @@ function renderView(view, container) {
                     </a>
                 </div>
                 
+                <!-- PUBLICIDAD EN HOME (Justo bajo botones) -->
+                <div style="margin-bottom: 20px;">
+                    ${generateNativeAdHtml("75px", "home-mid")}
+                </div>
+
                 <section class="guide-preview">
                     <div class="section-header">
                         <h2>Guía Comercial</h2>
@@ -224,9 +230,6 @@ function renderView(view, container) {
                     </div>
                 </section>
                 
-                <!-- PUBLICIDAD EN HOME (Parte Media) -->
-                ${generateNativeAdHtml("75px", "home-mid")}
-
                 <section class="categories" style="margin-top: 15px;">
                     <div class="section-header">
                         <h2>Categorías</h2>
@@ -267,7 +270,7 @@ function renderView(view, container) {
                     <i class="fas fa-arrow-left"></i>
                 </button>
 
-                <button onclick="showPostComposer()" class="floating-post-btn" style="bottom: 30px !important; z-index: 99999 !important;">
+                <button onclick="showPostComposer()" class="floating-post-btn">
                     <i class="fas fa-plus"></i>
                 </button>
             `;
@@ -279,18 +282,13 @@ function renderView(view, container) {
             container.innerHTML = `
                 <div style="height: 100vh; width: 100vw; overflow: hidden; background: #000; position: fixed; top: 0; left: 0; z-index: 500;">
                     <!-- Botón Volver -->
-                    <button onclick="navigate('home')" style="position: absolute; top: 25px; left: 20px; z-index: 2000; background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; width: 45px; height: 45px; border-radius: 50%; backdrop-filter: blur(10px); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                    <button onclick="navigate('home')" style="position: absolute; top: 30px; left: 20px; z-index: 2000; background: rgba(0,0,0,0.8); border: 1px solid var(--glass-border); color: white; width: 45px; height: 45px; border-radius: 50%; backdrop-filter: blur(10px); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
                         <i class="fas fa-arrow-left"></i>
                     </button>
                     
-                    <!-- BANNER NATIVO FLOTANTE (Superior) -->
-                    <div style="position: absolute; top: 85px; left: 15px; right: 15px; z-index: 1001;">
-                        ${generateNativeAdHtml("70px", "map-top")}
-                    </div>
-
-                    <!-- MAPA FONDO -->
+                    <!-- MAPA FONDO (Subido +850px y recortado inferior para ocultar Mapbox y mostrar Banner completo) -->
                     <iframe src="https://goopiapp.com/taxis-disponibles/" 
-                            style="width: 100%; height: calc(100% + 95px); border: none; position: absolute; top: -95px; left: 0;" 
+                            style="width: 100%; height: calc(100% + 950px); border: none; position: absolute; top: -850px; left: 0;" 
                             allow="geolocation">
                     </iframe>
                 </div>
@@ -536,6 +534,56 @@ async function fetchNews() {
     } catch (e) { console.error(e); }
 }
 
+async function checkDynamicPopup() {
+    try {
+        const response = await fetch(`${wpConfig.url}/wp/v2/pages?slug=publicidad-popup&_embed&t=${new Date().getTime()}`);
+        const pages = await response.json();
+
+        if (pages && pages.length > 0) {
+            const page = pages[0];
+            // Removed 24h check for testing as requested to ensure it stays visible
+            showInfoPopup(page);
+        }
+    } catch (e) {
+        console.error("Popup Error:", e);
+    }
+}
+
+function showInfoPopup(page) {
+    let popupBody = document.getElementById('dynamic-popup');
+    if (!popupBody) {
+        popupBody = document.createElement('div');
+        popupBody.id = 'dynamic-popup';
+        popupBody.className = 'popup-overlay';
+        document.body.appendChild(popupBody);
+    }
+
+    const featuredImg = page._embedded?.['wp:featuredmedia']?.[0]?.source_url || '';
+
+    popupBody.innerHTML = `
+        <div class="popup-content">
+            <button class="popup-close" onclick="closePopup()">
+                <i class="fas fa-times"></i>
+            </button>
+            ${featuredImg ? `<img src="${featuredImg}" class="popup-img">` : ''}
+        </div>
+    `;
+
+    setTimeout(() => {
+        popupBody.classList.add('active');
+        localStorage.setItem('last_popup_id', page.id);
+        localStorage.setItem('last_popup_time', new Date().getTime());
+    }, 1500);
+}
+
+function closePopup() {
+    const popup = document.getElementById('dynamic-popup');
+    if (popup) {
+        popup.classList.remove('active');
+        setTimeout(() => popup.remove(), 400);
+    }
+}
+
 function viewDetails(postId) {
     const post = state.posts.find(p => p.id === postId);
     if (!post) return;
@@ -597,6 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFirebase();
     initCommunity();
     renderView('home', mainContent);
+    checkDynamicPopup(); // New: Check for dynamic notices from WP
 
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
@@ -687,7 +736,6 @@ function renderCommunityPosts() {
         `;
         return;
     }
-
     feed.innerHTML = state.communityPosts.map(post => {
         const user = auth ? auth.currentUser : null;
         const liked = post.likes && user && post.likes[user.uid];
@@ -697,26 +745,29 @@ function renderCommunityPosts() {
             <div id="post-${post.id}" class="tiktok-post">
                 ${post.mediaUrl ? (
                 post.mediaType === 'video'
-                    ? `<video src="${post.mediaUrl}" class="tiktok-media" loop playsinline onclick="toggleVideo(this)"></video>`
+                    ? `<video src="${post.mediaUrl}" class="tiktok-media" loop playsinline ${state.isMuted ? 'muted' : ''} onclick="toggleVideo(this)"></video>`
                     : `<img src="${post.mediaUrl}" class="tiktok-media">`
             ) : `<div class="tiktok-media" style="background: linear-gradient(45deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; font-size: 24px; padding: 40px; text-align: center;">${post.text}</div>`}
                 
-                <div class="tiktok-overlay">
-                    <div class="tiktok-actions">
-                        <div class="action-item" onclick="handleLike('${post.id}')">
-                            <i class="fas fa-heart ${liked ? 'liked' : ''}"></i>
-                            <span>${likesCount}</span>
-                        </div>
-                        <div class="action-item" onclick="showComments('${post.id}')">
-                            <i class="fas fa-comment-dots"></i>
-                            <span>${post.comments ? Object.keys(post.comments).length : 0}</span>
-                        </div>
-                        <div class="action-item" onclick="sharePost('${post.id}')">
-                            <i class="fas fa-share"></i>
-                        </div>
+                <div class="tiktok-actions">
+                    <div class="action-item" onclick="event.stopPropagation(); toggleMute()">
+                        <i class="fas ${state.isMuted ? 'fa-volume-mute' : 'fa-volume-up'}"></i>
                     </div>
-                    
-                    <div class="tiktok-info">
+                    <div class="action-item" onclick="event.stopPropagation(); handleLike('${post.id}')">
+                        <i class="fas fa-heart ${liked ? 'liked' : ''}"></i>
+                        <span>${likesCount}</span>
+                    </div>
+                    <div class="action-item" onclick="event.stopPropagation(); showComments('${post.id}')">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>${post.comments ? Object.keys(post.comments).length : 0}</span>
+                    </div>
+                    <div class="action-item" onclick="event.stopPropagation(); sharePost('${post.id}')">
+                        <i class="fas fa-share"></i>
+                    </div>
+                </div>
+
+                <div class="tiktok-overlay">
+                    <div class="tiktok-info" onclick="event.stopPropagation()">
                         <div class="user-tag">@${post.userName.replace(/\s+/g, '').toLowerCase()}</div>
                         <div class="post-desc">${post.text || ''}</div>
                     </div>
@@ -743,6 +794,101 @@ function renderCommunityPosts() {
 function toggleVideo(video) {
     if (video.paused) video.play();
     else video.pause();
+}
+
+function toggleMute() {
+    state.isMuted = !state.isMuted;
+    const videos = document.querySelectorAll('video.tiktok-media');
+    videos.forEach(v => v.muted = state.isMuted);
+
+    // Update icons in all action items
+    const muteIcons = document.querySelectorAll('.tiktok-actions .fa-volume-up, .tiktok-actions .fa-volume-mute');
+    muteIcons.forEach(icon => {
+        icon.className = `fas ${state.isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`;
+    });
+}
+
+async function sharePost(postId) {
+    const post = state.communityPosts.find(p => p.id === postId);
+    if (!post) return;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Goopi App - Reel de ' + post.userName,
+                text: post.text,
+                url: window.location.href
+            });
+        } catch (e) { console.log('Error sharing:', e); }
+    } else {
+        alert("Enlace copiado: " + window.location.href);
+    }
+}
+
+function showComments(postId) {
+    const post = state.communityPosts.find(p => p.id === postId);
+    if (!post) return;
+
+    let existingSheet = document.querySelector('.comment-sheet');
+    if (existingSheet) existingSheet.remove();
+
+    const sheet = document.createElement('div');
+    sheet.className = 'comment-sheet';
+
+    const comments = post.comments ? Object.values(post.comments) : [];
+
+    sheet.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="color:white; margin:0;">Comentarios (${comments.length})</h3>
+            <button onclick="this.closest('.comment-sheet').classList.remove('active')" style="background:none; border:none; color:white; font-size:20px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="comment-list">
+            ${comments.length > 0 ? comments.map(c => `
+                <div class="comment-item">
+                    <div class="comment-avatar">${c.userName?.[0] || 'G'}</div>
+                    <div class="comment-content">
+                        <b>${c.userName || 'Gooper'}</b>
+                        <div>${c.text}</div>
+                    </div>
+                </div>
+            `).join('') : '<div style="text-align:center; color:rgba(255,255,255,0.3); padding:40px;">No hay comentarios aún. ¡Sé el primero!</div>'}
+        </div>
+        <div class="comment-input-area">
+            <input type="text" id="new-comment-text" placeholder="Escribe un comentario...">
+            <button onclick="sendComment('${postId}')" style="background:var(--secondary-lilac); border:none; color:white; width:45px; height:45px; border-radius:50%;"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    `;
+
+    document.body.appendChild(sheet);
+    setTimeout(() => sheet.classList.add('active'), 10);
+}
+
+async function sendComment(postId) {
+    if (!auth.currentUser) return navigate('login');
+
+    const input = document.getElementById('new-comment-text');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const btn = event.currentTarget;
+    btn.disabled = true;
+
+    try {
+        const commentRef = db.ref(`posts/${postId}/comments`).push();
+        await commentRef.set({
+            userId: auth.currentUser.uid,
+            userName: auth.currentUser.displayName || 'Gooper',
+            text: text,
+            timestamp: Date.now()
+        });
+
+        input.value = '';
+        showComments(postId); // Refresh
+    } catch (e) {
+        alert("Error al comentar: " + e.message);
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 async function handleLike(postId) {
@@ -815,11 +961,27 @@ async function submitPost(btn) {
 
         if (fileInput.files[0]) {
             const file = fileInput.files[0];
+            console.log("Subiendo archivo:", file.name);
             mediaType = file.type.startsWith('video/') ? 'video' : 'image';
             const storagePath = `posts/${user.uid}/${Date.now()}_${file.name}`;
             const storageRef = storage.ref(storagePath);
-            await storageRef.put(file);
+
+            // Monitor upload progress (Optional but helpful)
+            const uploadTask = storageRef.put(file);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        btn.innerText = `SUBIENDO: ${Math.round(progress)}%`;
+                    },
+                    (error) => reject(error),
+                    () => resolve()
+                );
+            });
+
             mediaUrl = await storageRef.getDownloadURL();
+            console.log("Archivo subido con éxito:", mediaUrl);
         }
 
         const newPostRef = db.ref('posts').push();
@@ -832,7 +994,9 @@ async function submitPost(btn) {
             timestamp: Date.now()
         });
 
+        alert("¡Publicado con éxito!");
         btn.closest('div').parentElement.remove();
+        if (state.currentView === 'community') initCommunity();
     } catch (e) {
         console.error(e);
         alert("Error al publicar: " + e.message);
